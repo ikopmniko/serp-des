@@ -14,8 +14,8 @@ API_KEY = "dbeb27d86a877bb5af654fd9ff9a32f170dc4e76"
 URL_API = "https://google.serper.dev/search"
 
 # Rentang baris
-mulai = 12000
-endnya = 15000
+mulai = 1
+endnya = 2500
 
 headers = {
     "X-API-KEY": API_KEY,
@@ -84,4 +84,5 @@ def main(start_line=1, end_line=None):
             f.result()
 
 if __name__ == "__main__":
+
     main(start_line=mulai, end_line=endnya)
