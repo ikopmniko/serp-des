@@ -1,21 +1,17 @@
 import requests
 import time
 from concurrent.futures import ThreadPoolExecutor
-from supabase import create_client, Client
-
-# Ganti dengan info Supabase kamu
-SUPABASE_URL = "https://cyemzywgajklblvvgwea.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5ZW16eXdnYWprbGJsdnZnd2VhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3NjE5MjAsImV4cCI6MjA3NDMzNzkyMH0.VhSB949TDdJnvDTbcHrxIAKmXqeYhTayPPuztc7t4To"
-SUPABASE_TABLE_NAME = "des5"
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # API Serper
 API_KEY = "dbeb27d86a877bb5af654fd9ff9a32f170dc4e76"
 URL_API = "https://google.serper.dev/search"
 
+# Endpoint PHP kamu
+PHP_ENDPOINT = "https://leamarie-yoga.de/save_serper.php"
+
 # Rentang baris
 mulai = 1
-endnya = 2500
+endnya = 25000
 
 headers = {
     "X-API-KEY": API_KEY,
@@ -27,7 +23,7 @@ def search_url(idx, target_url):
     payload = {"q": query}
 
     try:
-        response = requests.post(URL_API, headers=headers, json=payload)
+        response = requests.post(URL_API, headers=headers, json=payload, timeout=30)
         data = response.json()
 
         if "organic" in data and len(data["organic"]) > 0:
@@ -37,8 +33,8 @@ def search_url(idx, target_url):
             snippet = top_result.get("snippet", "").strip()
             if not snippet:
                 snippet = "snipet nya kosong"
-            print(f"[{idx}] ✔ {title} -> {link} | Snippet: {snippet}")
-            return {"title": title, "url": link, "snippet": snippet}
+            print(f"[{idx}] ✔ {title} -> {link}")
+            return {"title": title, "url": link}
         else:
             print(f"[{idx}] ❌ Tidak ditemukan: {target_url}")
             return None
@@ -50,27 +46,24 @@ def search_url(idx, target_url):
     finally:
         time.sleep(1.2)
 
-def insert_to_supabase(data):
-    if data is None:
-        return
+def send_to_php(data):
+    """
+    Kirim data ke API PHP (save_serper.php) dalam bentuk JSON:
+    { "url": "...", "title": "..." }
+    """
     try:
-        res = supabase.table(SUPABASE_TABLE_NAME).insert(data).execute()
-        # Debug print response
-        # print("Response dari Supabase:", res)
-        # Cek error secara fleksibel
-        if hasattr(res, 'error') and res.error is not None:
-            print(f"⚠ Gagal insert ke Supabase: {res.error}")
-        elif isinstance(res, dict) and "error" in res and res["error"] is not None:
-            print(f"⚠ Gagal insert ke Supabase: {res['error']}")
+        res = requests.post(PHP_ENDPOINT, json=data, timeout=15)
+        if res.status_code == 200:
+            print(f"✔ Terkirim ke PHP: {data['url']}")
         else:
-            print(f"✔ Data berhasil disimpan ke Supabase: {getattr(res, 'data', res)}")
+            print(f"⚠ Gagal kirim ke PHP ({res.status_code}): {res.text}")
     except Exception as e:
-        print(f"⚠ Error insert ke Supabase: {e}")
+        print(f"⚠ Error kirim ke PHP: {e}")
 
 def worker(idx, url):
     result = search_url(idx, url)
     if result:
-        insert_to_supabase(result)
+        send_to_php(result)
 
 def main(start_line=1, end_line=None):
     with open("list_url.csv", "r", encoding="utf-8") as f:
@@ -84,5 +77,4 @@ def main(start_line=1, end_line=None):
             f.result()
 
 if __name__ == "__main__":
-
     main(start_line=mulai, end_line=endnya)
