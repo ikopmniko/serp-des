@@ -3,15 +3,15 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 # API Serper
-API_KEY = "8b561a4795cf5004755a079d0a7b1cc92df3a5c6"
+API_KEY = "8b1cce89c7f6e52c857351c907231e73c2a6a8ad"
 URL_API = "https://google.serper.dev/search"
 
 # Endpoint PHP kamu
 PHP_ENDPOINT = "https://leamarie-yoga.de/save_serper.php"
 
 # Rentang baris
-mulai = 45000
-endnya = 47500
+mulai = 47500
+endnya = 50000
 
 headers = {
     "X-API-KEY": API_KEY,
@@ -78,6 +78,7 @@ def main(start_line=1, end_line=None):
 
 if __name__ == "__main__":
     main(start_line=mulai, end_line=endnya)
+
 
 
 
